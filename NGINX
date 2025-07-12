@@ -1,0 +1,22 @@
+name: Deploy NGINX Reverse Proxy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy NGINX
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /home/ec2-user/mynginx
+            git pull
+            docker build -t mynginx_container .
+            docker stop mynginx_container || true && docker rm mynginx_container || true
+            docker run -d -p 80:80 --network mynet --name mynginx_container mynginx_container
